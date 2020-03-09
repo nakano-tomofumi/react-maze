@@ -4,10 +4,11 @@ import './index.css';
 
 
 function Square(props) {
+  const wall = (props.value === "") ? "square" : "square wall"
   return (
-    <div className="square" >
-      {props.value}
-    </div>
+    <td className={wall} >
+        {props.value}
+    </td>
   );
 }
 
@@ -15,10 +16,11 @@ function Square(props) {
 function Row(props) {
   const row = props.row
   return (
-    <div className="board-row">
-        {row.map((square) =>
-                 <Square value={square} />)}
-    </div>    
+    <tr>
+        {row.map((square, i) =>
+                 <Square key={i}
+                         value={square} />)}
+    </tr>
   );
 }
 
@@ -66,10 +68,14 @@ class Maze extends React.Component {
   render() {
     const rows = this.state.rows;
     return (
-      <div>
-          {rows.map((row) =>
-                    <Row row={row}/>)}
-      </div>
+      <table>
+          <tbody>
+              {rows.map((row, i) =>
+                        <Row key={i}
+                            row={row}
+                        />)}
+          </tbody>
+      </table>
     );
   }
 }
