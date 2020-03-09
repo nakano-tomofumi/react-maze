@@ -8,6 +8,8 @@ ol, ul {
 }
 
 table {
+    width: 710px;
+    height: 710px;
     border: solid 0px;
     border-collapse: collapse;
 }
@@ -26,19 +28,19 @@ table {
   background: #fff;
   border: 0px solid #999;
   float: left;
-  font-size: 10px;
+  font-size: 8px;
   font-weight: bold;
-  line-height: 12px;
-  height: 12px;
+  line-height: 10px;
+  height: 10px;
   margin-right: -1px;
   margin-top: -1px;
   padding: 0;
   text-align: center;
-  width: 12px;
+  width: 10px;
 }
 
 .wall {
-  background: #777;
+  background: #999;
 }
 
 

@@ -55,7 +55,7 @@ function makeMaze(rows, open) {
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    const rows = Array(51).fill('X').map(x => Array(51).fill('X'));
+    const rows = Array(71).fill('X').map(x => Array(71).fill('X'));
     rows[1][1] = '';
     const xy = [1, 1];
     makeMaze(rows, [[xy, [1, 0]],
