@@ -45,14 +45,15 @@ function makeMaze(rows, open) {
         });
       }
     }
-    open.splice(i, 1); // delete
+    open.splice(i, 1);
   }
 }
+
 
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    const rows = Array(21).fill('X').map(x => Array(31).fill('X'));
+    const rows = Array(51).fill('X').map(x => Array(51).fill('X'));
     rows[1][1] = '';
     const xy = [1, 1];
     makeMaze(rows, [[xy, [1, 0]],
