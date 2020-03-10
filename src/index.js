@@ -30,6 +30,8 @@ function makeMaze(rows, open) {
     [1, 0],
     [0, 1],
     [-1, 0],
+    [0, -1],
+    [-1, 0],
     [0, -1]];
   while(open.length > 0) {
     const i = Math.floor(Math.random() * Math.floor(open.length));
