@@ -70,7 +70,7 @@ class Maze extends React.Component {
   }
 
   handleMouseOver(x, y) {
-    const rows = this.rows;
+    const rows = this.state.rows.slice();
     rows[y][x] = '.';
     this.setState({
       rows: rows,
