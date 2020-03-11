@@ -6,7 +6,8 @@ import './index.css';
 function Square(props) {
   const wall = (props.value === "") ? "square" : "square wall"
   return (
-    <td className={wall} >
+    <td className={wall}
+        onMouseOver={props.onMouseOver}>
         {props.value}
     </td>
   );
@@ -17,9 +18,10 @@ function Row(props) {
   const row = props.row
   return (
     <tr>
-        {row.map((square, i) =>
-                 <Square key={i}
-                         value={square} />)}
+        {row.map((square, x) =>
+                 <Square key={x}
+                         value={square}
+                         onMouseOver={() => props.onMouseOver(x)}/>)}
     </tr>
   );
 }
@@ -43,7 +45,7 @@ function makeMaze(rows, open) {
       if (rows[y2][x2] !== '') {
         const [x1, y1] = [x+xa, y+ya];
         rows[y1][x1] = '';
-        rows[y2][x2] = '';      
+        rows[y2][x2] = '';
         arrows.forEach((arrow) => {
           open.push([[x2, y2], arrow]);
         });
@@ -67,14 +69,17 @@ class Maze extends React.Component {
     }
   }
 
+
+
   render() {
     const rows = this.state.rows;
     return (
       <table>
           <tbody>
-              {rows.map((row, i) =>
-                        <Row key={i}
-                            row={row}
+              {rows.map((row, y) =>
+                        <Row key={y}
+                             row={row}
+                             onMouseOver={(x) => this.handleMouseOver(x, y)}
                         />)}
           </tbody>
       </table>
