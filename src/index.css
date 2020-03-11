@@ -43,6 +43,10 @@ table {
   background: #999;
 }
 
+.path {
+  background: red;
+}
+
 
 .square:focus {
   outline: none;

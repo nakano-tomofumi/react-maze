@@ -4,7 +4,12 @@ import './index.css';
 
 
 function Square(props) {
-  const wall = (props.value === "") ? "square" : "square wall"
+  var wall = "square"
+  if (props.value === "X") {
+    wall = "square wall";
+  } else if (props.value === ".") {
+    wall = "square path";
+  }
   return (
     <td className={wall}
         onMouseOver={props.onMouseOver}>
@@ -71,7 +76,9 @@ class Maze extends React.Component {
 
   handleMouseOver(x, y) {
     const rows = this.state.rows.slice();
-    rows[y][x] = '.';
+    if (rows[y][x] == '') {
+      rows[y][x] = '.';
+    }
     this.setState({
       rows: rows,
     });
