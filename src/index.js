@@ -4,14 +4,21 @@ import './index.css';
 
 
 function Square(props) {
-  var wall = "square"
   if (props.value === "X") {
-    wall = "square wall";
+    return (
+      <td className="square wall">
+          {props.value}
+      </td>
+    )
   } else if (props.value === ".") {
-    wall = "square path";
+    return (
+      <td className="square trace">
+          {props.value}
+      </td>
+    )
   }
   return (
-    <td className={wall}
+    <td className="square"
         onMouseOver={props.onMouseOver}>
         {props.value}
     </td>
@@ -64,11 +71,13 @@ function makeMaze(rows, open) {
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    const rows = Array(71).fill('X').map(x => Array(71).fill('X'));
+    const [w, h] = [this.props.w, this.props.h].map(s => parseInt(s));
+    const rows = Array(h*2+1).fill('X').map(x => Array(w*2+1).fill('X'));
     rows[1][1] = '';
     const xy = [1, 1];
     makeMaze(rows, [[xy, [1, 0]],
                     [xy, [0, 1]]]);
+    rows[1][1] = '.';
     this.state = {
       rows: rows,
     }
@@ -76,18 +85,28 @@ class Maze extends React.Component {
 
   handleMouseOver(x, y) {
     const rows = this.state.rows.slice();
-    if (rows[y][x] == '') {
+    const arrows = [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1]];
+    if (arrows.some(a => rows[y+a[1]][x+a[0]] === '.')) {
       rows[y][x] = '.';
+      this.setState({
+        rows: rows,
+      });
     }
-    this.setState({
-      rows: rows,
-    });
   }
 
   render() {
     const rows = this.state.rows;
+    const [width, height] = [this.props.w, this.props.h].map(
+      s => String((parseInt(s)*2+1)*15)+"px");
     return (
-      <table>
+      <table
+          className="maze"
+          width={width}
+          height={height}>
           <tbody>
               {rows.map((row, y) =>
                         <Row key={y}
@@ -100,4 +119,8 @@ class Maze extends React.Component {
   }
 }
 
-ReactDOM.render(<Maze />, document.getElementById("root"));
+ReactDOM.render(
+  <Maze
+      w="20"
+      h="20"
+  />, document.getElementById("root"));

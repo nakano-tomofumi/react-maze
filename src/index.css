@@ -7,9 +7,7 @@ ol, ul {
   padding-left: 30px;
 }
 
-table {
-    width: 710px;
-    height: 710px;
+.maze {
     border: solid 0px;
     border-collapse: collapse;
 }
@@ -28,22 +26,22 @@ table {
   background: #fff;
   border: 0px solid #999;
   float: left;
-  font-size: 8px;
+  font-size: 13px;
   font-weight: bold;
-  line-height: 10px;
-  height: 10px;
+  line-height: 15px;
+  height: 15px;
   margin-right: -1px;
   margin-top: -1px;
   padding: 0;
   text-align: center;
-  width: 10px;
+  width: 15px;
 }
 
 .wall {
   background: #999;
 }
 
-.path {
+.trace {
   background: red;
 }
 
