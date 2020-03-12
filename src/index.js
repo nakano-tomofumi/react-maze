@@ -4,9 +4,22 @@ import './index.css';
 
 
 function Square(props) {
-  const wall = (props.value === "") ? "square" : "square wall"
+  if (props.value === "X") {
+    return (
+      <td className="square wall">
+          {props.value}
+      </td>
+    )
+  } else if (props.value === ".") {
+    return (
+      <td className="square trace">
+          {props.value}
+      </td>
+    )
+  }
   return (
-    <td className={wall} >
+    <td className="square"
+        onMouseOver={props.onMouseOver}>
         {props.value}
     </td>
   );
@@ -17,9 +30,10 @@ function Row(props) {
   const row = props.row
   return (
     <tr>
-        {row.map((square, i) =>
-                 <Square key={i}
-                         value={square} />)}
+        {row.map((square, x) =>
+                 <Square key={x}
+                         value={square}
+                         onMouseOver={() => props.onMouseOver(x)}/>)}
     </tr>
   );
 }
@@ -43,7 +57,7 @@ function makeMaze(rows, open) {
       if (rows[y2][x2] !== '') {
         const [x1, y1] = [x+xa, y+ya];
         rows[y1][x1] = '';
-        rows[y2][x2] = '';      
+        rows[y2][x2] = '';
         arrows.forEach((arrow) => {
           open.push([[x2, y2], arrow]);
         });
@@ -57,24 +71,47 @@ function makeMaze(rows, open) {
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    const rows = Array(71).fill('X').map(x => Array(71).fill('X'));
+    const [w, h] = [this.props.w, this.props.h].map(s => parseInt(s));
+    const rows = Array(h*2+1).fill('X').map(x => Array(w*2+1).fill('X'));
     rows[1][1] = '';
     const xy = [1, 1];
     makeMaze(rows, [[xy, [1, 0]],
                     [xy, [0, 1]]]);
+    rows[1][1] = '.';
     this.state = {
       rows: rows,
     }
   }
 
+  handleMouseOver(x, y) {
+    const rows = this.state.rows.slice();
+    const arrows = [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1]];
+    if (arrows.some(a => rows[y+a[1]][x+a[0]] === '.')) {
+      rows[y][x] = '.';
+      this.setState({
+        rows: rows,
+      });
+    }
+  }
+
   render() {
     const rows = this.state.rows;
+    const [width, height] = [this.props.w, this.props.h].map(
+      s => String((parseInt(s)*2+1)*15)+"px");
     return (
-      <table>
+      <table
+          className="maze"
+          width={width}
+          height={height}>
           <tbody>
-              {rows.map((row, i) =>
-                        <Row key={i}
-                            row={row}
+              {rows.map((row, y) =>
+                        <Row key={y}
+                             row={row}
+                             onMouseOver={(x) => this.handleMouseOver(x, y)}
                         />)}
           </tbody>
       </table>
@@ -82,4 +119,8 @@ class Maze extends React.Component {
   }
 }
 
-ReactDOM.render(<Maze />, document.getElementById("root"));
+ReactDOM.render(
+  <Maze
+      w="20"
+      h="20"
+  />, document.getElementById("root"));
