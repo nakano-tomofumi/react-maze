@@ -90,12 +90,22 @@ class Maze extends React.Component {
       [0, 1],
       [-1, 0],
       [0, -1]];
-    if (arrows.some(a => rows[y+a[1]][x+a[0]] === '.')) {
-      rows[y][x] = '.';
+    arrows.map(a => {
+      var [x1, y1] = [x, y];
+      while(rows[y1][x1] === '') {
+        [x1, y1] = [x1+a[1], y1+a[0]];
+      }
+      if (rows[y1][x1] === '.') {
+        [x1, y1] = [x, y];
+        while(rows[y1][x1] === '') {
+          rows[y1][x1] = '.';
+          [x1, y1] = [x1+a[1], y1+a[0]];
+        }
+      }
       this.setState({
         rows: rows,
       });
-    }
+    });
   }
 
   render() {
