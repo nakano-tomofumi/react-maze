@@ -40,15 +40,16 @@ function Row(props) {
 
 
 function makeMaze(rows, open) {
-  const arrows = [
+  var arrows = [
     [1, 0],
     [0, 1],
     [-1, 0],
-    [0, -1],
-    [-1, 0],
     [0, -1]];
   while(open.length > 0) {
-    const i = Math.floor(Math.random() * Math.floor(open.length));
+    var i = open.length-1;
+    if (Math.random() < 0.2) {
+      i = Math.floor(Math.random() * Math.floor(open.length));
+    }
     const [xy, arrow] = open[i];
     const [x, y] = xy;
     const [xa, ya] = arrow;
@@ -58,6 +59,7 @@ function makeMaze(rows, open) {
         const [x1, y1] = [x+xa, y+ya];
         rows[y1][x1] = '';
         rows[y2][x2] = '';
+        arrows.sort(function() { return Math.random() - Math.random(); });
         arrows.forEach((arrow) => {
           open.push([[x2, y2], arrow]);
         });
@@ -101,10 +103,10 @@ class Maze extends React.Component {
           rows[y1][x1] = '.';
           [x1, y1] = [x1+a[1], y1+a[0]];
         }
+        this.setState({
+          rows: rows,
+        });
       }
-      this.setState({
-        rows: rows,
-      });
     });
   }
 
@@ -131,6 +133,6 @@ class Maze extends React.Component {
 
 ReactDOM.render(
   <Maze
-      w="20"
-      h="20"
+      w="21"
+      h="21"
   />, document.getElementById("root"));
