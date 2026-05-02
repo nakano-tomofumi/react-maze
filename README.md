@@ -1,68 +1,62 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# React Maze
 
-## Available Scripts
+React で作った迷路ゲームです。マウスで通路をなぞると経路が赤く表示され、ゴールに到達すると経路が緑に変わります。
 
-In the project directory, you can run:
+公開先:
 
-### `yarn start`
+- https://dx-locations.com
+- https://react-maze-20200309.web.app
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## URL パラメータ
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+迷路のサイズは URL パラメータで指定できます。
 
-### `yarn test`
+```text
+https://dx-locations.com/?h=41&w=41
+```
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+- `w`: 迷路の幅
+- `h`: 迷路の高さ
+- 未指定時は `w=84`, `h=42`
+- 指定値は `1` から `200` の範囲に制限されます
 
-### `yarn build`
+## 開発
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+このプロジェクトは Vite と Yarn v1 を使います。
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+```sh
+yarn start
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+ローカル開発サーバーを起動します。
 
-### `yarn eject`
+## ビルド
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```sh
+yarn build
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+本番用ファイルを `build` に生成します。Firebase Hosting もこの `build` ディレクトリを公開します。
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## ローカル確認
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```sh
+yarn preview
+```
 
-## Learn More
+ビルド済みファイルをローカルで確認します。
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## セキュリティ確認
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+```sh
+yarn audit --json
+```
 
-### Code Splitting
+依存関係の脆弱性を確認します。
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+## デプロイ
 
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+```sh
+yarn build
+firebase deploy --project react-maze-20200309
+```
