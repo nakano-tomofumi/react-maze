@@ -3,6 +3,26 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 
 const CELL_SIZE = 7.5;
+const DEFAULT_WIDTH = 84;
+const DEFAULT_HEIGHT = 42;
+const MAX_SIZE = 200;
+
+
+function getMazeSize() {
+  const params = new URLSearchParams(window.location.search);
+  const parseSize = (name, fallback) => {
+    const value = Number.parseInt(params.get(name), 10);
+    if (!Number.isInteger(value)) {
+      return fallback;
+    }
+    return Math.min(Math.max(value, 1), MAX_SIZE);
+  };
+
+  return {
+    w: parseSize('w', DEFAULT_WIDTH),
+    h: parseSize('h', DEFAULT_HEIGHT),
+  };
+}
 
 
 function Square(props) {
@@ -137,9 +157,10 @@ class Maze extends React.Component {
 }
 
 const root = createRoot(document.getElementById("root"));
+const mazeSize = getMazeSize();
 
 root.render(
   <Maze
-      w="84"
-      h="42"
+      w={mazeSize.w}
+      h={mazeSize.h}
   />);
