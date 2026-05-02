@@ -1,5 +1,5 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 import './index.css';
 
 
@@ -92,7 +92,7 @@ class Maze extends React.Component {
       [0, 1],
       [-1, 0],
       [0, -1]];
-    arrows.map(a => {
+    arrows.forEach(a => {
       var [x1, y1] = [x, y];
       while(rows[y1][x1] === '') {
         [x1, y1] = [x1+a[1], y1+a[0]];
@@ -131,8 +131,10 @@ class Maze extends React.Component {
   }
 }
 
-ReactDOM.render(
+const root = createRoot(document.getElementById("root"));
+
+root.render(
   <Maze
       w="21"
       h="21"
-  />, document.getElementById("root"));
+  />);
