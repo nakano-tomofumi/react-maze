@@ -2,6 +2,8 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 
+const CELL_SIZE = 7.5;
+
 
 function Square(props) {
   if (props.value === "X") {
@@ -82,6 +84,7 @@ class Maze extends React.Component {
     rows[1][1] = '.';
     this.state = {
       rows: rows,
+      completed: false,
     }
   }
 
@@ -103,8 +106,10 @@ class Maze extends React.Component {
           rows[y1][x1] = '.';
           [x1, y1] = [x1+a[1], y1+a[0]];
         }
+        const completed = rows[rows.length - 2][rows[0].length - 2] === '.';
         this.setState({
           rows: rows,
+          completed: completed,
         });
       }
     });
@@ -113,10 +118,10 @@ class Maze extends React.Component {
   render() {
     const rows = this.state.rows;
     const [width, height] = [this.props.w, this.props.h].map(
-      s => String((parseInt(s)*2+1)*15)+"px");
+      s => String((parseInt(s)*2+1)*CELL_SIZE)+"px");
     return (
       <table
-          className="maze"
+          className={this.state.completed ? "maze completed" : "maze"}
           width={width}
           height={height}>
           <tbody>
@@ -135,6 +140,6 @@ const root = createRoot(document.getElementById("root"));
 
 root.render(
   <Maze
-      w="21"
-      h="21"
+      w="84"
+      h="42"
   />);

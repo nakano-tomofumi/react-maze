@@ -10,6 +10,7 @@ ol, ul {
 .maze {
     border: solid 0px;
     border-collapse: collapse;
+    margin: 0 auto;
 }
 
 .board-row:after {
@@ -26,15 +27,15 @@ ol, ul {
   background: #fff;
   border: 0px solid #999;
   float: left;
-  font-size: 13px;
+  font-size: 0;
   font-weight: bold;
-  line-height: 15px;
-  height: 15px;
+  line-height: 7.5px;
+  height: 7.5px;
   margin-right: -1px;
   margin-top: -1px;
   padding: 0;
   text-align: center;
-  width: 15px;
+  width: 7.5px;
 }
 
 .wall {
@@ -43,6 +44,10 @@ ol, ul {
 
 .trace {
   background: red;
+}
+
+.completed .trace {
+  background: green;
 }
 
 
