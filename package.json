@@ -16,7 +16,7 @@
   },
   "scripts": {
     "start": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/verify-pwa-build.mjs",
     "test": "node --test",
     "benchmark:maze": "node scripts/benchmark-maze.mjs",
     "benchmark:trace": "node scripts/benchmark-trace.mjs",
