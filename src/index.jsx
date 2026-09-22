@@ -3,28 +3,9 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import { getCellFromPointer, drawMaze } from './canvas.mjs';
 import { createInitialMazeState, isMazeCompleted } from './maze.mjs';
+import { getMazeSize } from './maze-size.mjs';
 
 const CELL_SIZE = 7.5;
-const DEFAULT_WIDTH = 84;
-const DEFAULT_HEIGHT = 42;
-const MAX_SIZE = 200;
-
-
-function getMazeSize() {
-  const params = new URLSearchParams(window.location.search);
-  const parseSize = (name, fallback) => {
-    const value = Number.parseInt(params.get(name), 10);
-    if (!Number.isInteger(value)) {
-      return fallback;
-    }
-    return Math.min(Math.max(value, 1), MAX_SIZE);
-  };
-
-  return {
-    w: parseSize('w', DEFAULT_WIDTH),
-    h: parseSize('h', DEFAULT_HEIGHT),
-  };
-}
 
 
 class Maze extends React.Component {
@@ -127,7 +108,7 @@ class Maze extends React.Component {
 }
 
 const root = createRoot(document.getElementById("root"));
-const mazeSize = getMazeSize();
+const mazeSize = getMazeSize(window.location.search);
 
 root.render(
   <Maze
