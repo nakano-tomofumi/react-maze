@@ -26,6 +26,24 @@ Vite の本番ビルドを実行する。
 
 `vite.config.mjs` の `build.outDir` は `build` であり、Firebase Hosting の公開ディレクトリも `firebase.json` で `build` に設定されている。
 
+## Test
+
+```sh
+yarn test
+```
+
+Node.js 標準テストランナーで迷路ロジックの回帰テストを実行する。
+
+## Maze generation benchmark
+
+```sh
+yarn benchmark:maze
+```
+
+既定サイズ `84x42` と最大サイズ `200x200` の迷路生成時間を、warm-up 後に複数回計測して中央値と各 run の値を表示する。
+
+性能値は実行環境によって変動するため、この benchmark の絶対時間を CI の合否判定には使用しない。性能変更の PR では、Node.js バージョンなどの実行環境と計測結果を記録し、同一環境で変更前後を比較する。
+
 ## Local preview
 
 ```sh
