@@ -7,7 +7,7 @@ on:
       - master
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   test-and-build:
@@ -15,8 +15,6 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -27,19 +25,7 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install
-
-      - name: Commit generated lockfile
-        if: github.event_name == 'pull_request'
-        run: |
-          if git diff --quiet -- yarn.lock; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add yarn.lock
-          git commit -m "Update Yarn lockfile"
-          git push origin HEAD:${{ github.head_ref }}
+        run: yarn install --frozen-lockfile
 
       - name: Run lint
         run: yarn lint
