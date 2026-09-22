@@ -70,3 +70,63 @@ export function createInitialMazeState(w, h) {
     completed: isMazeCompleted(rows),
   };
 }
+
+
+export function updateTraceState(previousState, x, y) {
+  const rows = extendTrace(previousState.rows, x, y);
+  if (rows === previousState.rows) {
+    return null;
+  }
+
+  return {
+    rows,
+    completed: isMazeCompleted(rows),
+  };
+}
+
+export function extendTrace(rows, x, y) {
+  if (!rows[y] || rows[y][x] !== '') {
+    return rows;
+  }
+
+  const directions = [
+    [0, 1],
+    [1, 0],
+    [0, -1],
+    [-1, 0],
+  ];
+
+  for (const [dx, dy] of directions) {
+    let scanX = x;
+    let scanY = y;
+
+    while (rows[scanY][scanX] === '') {
+      scanX += dx;
+      scanY += dy;
+    }
+
+    if (rows[scanY][scanX] !== '.') {
+      continue;
+    }
+
+    const nextRows = rows.slice();
+    const copiedRows = new Set();
+    let traceX = x;
+    let traceY = y;
+
+    while (rows[traceY][traceX] === '') {
+      if (!copiedRows.has(traceY)) {
+        nextRows[traceY] = rows[traceY].slice();
+        copiedRows.add(traceY);
+      }
+
+      nextRows[traceY][traceX] = '.';
+      traceX += dx;
+      traceY += dy;
+    }
+
+    return nextRows;
+  }
+
+  return rows;
+}
