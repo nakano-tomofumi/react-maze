@@ -4,8 +4,14 @@ import './index.css';
 import { getCellFromPointer, drawMaze, drawTrace, drawTraceCells } from './canvas.mjs';
 import { createInitialMazeState, extendTrace, isPassage, isTraceVisited } from './maze.mjs';
 import { getMazeSize } from './maze-size.mjs';
+import {
+  canActivatePointer,
+  shouldReleasePointer,
+  shouldTrackPointerMove,
+} from './pointer-input.mjs';
 
 const CELL_SIZE = 7.5;
+const COARSE_POINTER_CELL_SIZE = 15;
 
 
 class Maze extends React.Component {
@@ -19,6 +25,7 @@ class Maze extends React.Component {
       completed: initialMaze.completed,
     };
     this.canvasRef = React.createRef();
+    this.activePointerId = null;
   }
 
   componentDidMount() {
@@ -37,7 +44,7 @@ class Maze extends React.Component {
     return canvas.getContext('2d');
   }
 
-  handleMouseMove(event) {
+  handlePointerPosition(event) {
     const canvas = this.canvasRef.current;
     if (!canvas) {
       return;
@@ -59,10 +66,59 @@ class Maze extends React.Component {
       return;
     }
 
-    this.handleMouseOver(cell.x, cell.y);
+    this.extendTraceTo(cell.x, cell.y);
   }
 
-  handleMouseOver(x, y) {
+  handlePointerDown(event) {
+    if (!canActivatePointer(event.pointerType, event.isPrimary, this.activePointerId)) {
+      return;
+    }
+
+    this.activePointerId = event.pointerId;
+
+    const canvas = this.canvasRef.current;
+    if (canvas && typeof canvas.setPointerCapture === 'function') {
+      canvas.setPointerCapture(event.pointerId);
+    }
+
+    this.handlePointerPosition(event);
+  }
+
+  handlePointerMove(event) {
+    if (!shouldTrackPointerMove(event.pointerType, event.pointerId, this.activePointerId)) {
+      return;
+    }
+
+    this.handlePointerPosition(event);
+  }
+
+  handlePointerEnd(event, processPosition = true) {
+    if (!shouldReleasePointer(event.pointerId, this.activePointerId)) {
+      return;
+    }
+
+    if (processPosition) {
+      this.handlePointerPosition(event);
+    }
+    this.activePointerId = null;
+
+    const canvas = this.canvasRef.current;
+    if (
+      canvas &&
+      typeof canvas.hasPointerCapture === 'function' &&
+      canvas.hasPointerCapture(event.pointerId)
+    ) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  handleLostPointerCapture(event) {
+    if (shouldReleasePointer(event.pointerId, this.activePointerId)) {
+      this.activePointerId = null;
+    }
+  }
+
+  extendTraceTo(x, y) {
     const previousCompleted = this.state.completed;
     const update = extendTrace(this.rows, this.trace, x, y);
 
@@ -88,8 +144,10 @@ class Maze extends React.Component {
     const canvasWidth = this.rows[0].length;
     const canvasHeight = this.rows.length;
     const style = {
-      width: String(canvasWidth * CELL_SIZE) + 'px',
-      height: String(canvasHeight * CELL_SIZE) + 'px',
+      '--maze-width': String(canvasWidth * CELL_SIZE) + 'px',
+      '--maze-height': String(canvasHeight * CELL_SIZE) + 'px',
+      '--maze-coarse-width': String(canvasWidth * COARSE_POINTER_CELL_SIZE) + 'px',
+      '--maze-coarse-height': String(canvasHeight * COARSE_POINTER_CELL_SIZE) + 'px',
     };
 
     return (
@@ -99,7 +157,11 @@ class Maze extends React.Component {
         width={canvasWidth}
         height={canvasHeight}
         style={style}
-        onMouseMove={(event) => this.handleMouseMove(event)}
+        onPointerDown={(event) => this.handlePointerDown(event)}
+        onPointerMove={(event) => this.handlePointerMove(event)}
+        onPointerUp={(event) => this.handlePointerEnd(event)}
+        onPointerCancel={(event) => this.handlePointerEnd(event, false)}
+        onLostPointerCapture={(event) => this.handleLostPointerCapture(event)}
       />
     );
   }
