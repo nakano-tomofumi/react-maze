@@ -17,6 +17,7 @@
   "scripts": {
     "start": "vite",
     "build": "vite build",
+    "test": "node --test",
     "preview": "vite preview",
     "deploy": "firebase deploy"
   }
