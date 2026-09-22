@@ -18,6 +18,7 @@
     "start": "vite",
     "build": "vite build",
     "test": "node --test",
+    "benchmark:maze": "node scripts/benchmark-maze.mjs",
     "preview": "vite preview",
     "deploy": "firebase deploy"
   }
