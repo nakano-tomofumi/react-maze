@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
+import { createSeededRandom } from '../src/maze-seed.mjs';
 import {
   createInitialMazeState,
   extendTrace,
@@ -78,6 +79,37 @@ function fixture() {
   trace.visited[6] = 1;
   return { rows, trace };
 }
+
+test('same seed and size produce identical maze rows', () => {
+  const first = createInitialMazeState(20, 12, createSeededRandom('repeatable-seed'));
+  const second = createInitialMazeState(20, 12, createSeededRandom('repeatable-seed'));
+
+  assert.deepEqual(first.rows, second.rows);
+});
+
+test('different seeds produce different maze rows for a representative size', () => {
+  const first = createInitialMazeState(20, 12, createSeededRandom('seed-a'));
+  const second = createInitialMazeState(20, 12, createSeededRandom('seed-b'));
+
+  assert.notDeepEqual(first.rows, second.rows);
+});
+
+test('directly injected RNG controls maze generation deterministically', () => {
+  const sequence = [0.1, 0.9, 0.3, 0.7, 0.2, 0.8];
+  const makeRandom = () => {
+    let index = 0;
+    return () => {
+      const value = sequence[index % sequence.length];
+      index += 1;
+      return value;
+    };
+  };
+
+  const first = createInitialMazeState(8, 6, makeRandom());
+  const second = createInitialMazeState(8, 6, makeRandom());
+
+  assert.deepEqual(first.rows, second.rows);
+});
 
 test('1x1 maze starts completed because start and goal are the same cell', () => {
   const state = createInitialMazeState(1, 1);
