@@ -2,7 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import { getCellFromPointer, drawMaze } from './canvas.mjs';
-import { createInitialMazeState, extendTrace, isMazeCompleted } from './maze.mjs';
+import { createInitialMazeState, updateTraceState } from './maze.mjs';
 import { getMazeSize } from './maze-size.mjs';
 
 const CELL_SIZE = 7.5;
@@ -59,15 +59,7 @@ class Maze extends React.Component {
   }
 
   handleMouseOver(x, y) {
-    const rows = extendTrace(this.state.rows, x, y);
-    if (rows === this.state.rows) {
-      return;
-    }
-
-    this.setState({
-      rows,
-      completed: isMazeCompleted(rows),
-    });
+    this.setState((previousState) => updateTraceState(previousState, x, y));
   }
 
   render() {
