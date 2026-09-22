@@ -1,3 +1,15 @@
+function takeFrontier(open, index) {
+  const lastIndex = open.length - 1;
+  const entry = open[index];
+
+  if (index !== lastIndex) {
+    open[index] = open[lastIndex];
+  }
+  open.pop();
+
+  return entry;
+}
+
 export function makeMaze(rows, open) {
   const arrows = [
     [1, 0],
@@ -9,10 +21,10 @@ export function makeMaze(rows, open) {
   while (open.length > 0) {
     let i = open.length - 1;
     if (Math.random() < 0.2) {
-      i = Math.floor(Math.random() * Math.floor(open.length));
+      i = Math.floor(Math.random() * open.length);
     }
 
-    const [xy, arrow] = open[i];
+    const [xy, arrow] = takeFrontier(open, i);
     const [x, y] = xy;
     const [xa, ya] = arrow;
     const [x2, y2] = [x + xa * 2, y + ya * 2];
@@ -31,8 +43,6 @@ export function makeMaze(rows, open) {
         });
       }
     }
-
-    open.splice(i, 1);
   }
 }
 
