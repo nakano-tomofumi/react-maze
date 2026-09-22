@@ -72,6 +72,18 @@ export function createInitialMazeState(w, h) {
 }
 
 
+export function updateTraceState(previousState, x, y) {
+  const rows = extendTrace(previousState.rows, x, y);
+  if (rows === previousState.rows) {
+    return null;
+  }
+
+  return {
+    rows,
+    completed: isMazeCompleted(rows),
+  };
+}
+
 export function extendTrace(rows, x, y) {
   if (!rows[y] || rows[y][x] !== '') {
     return rows;
