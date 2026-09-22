@@ -17,7 +17,7 @@ ol, ul {
   height: var(--maze-height);
 }
 
-@media (pointer: coarse) {
+@media (any-pointer: coarse) {
   .maze {
     width: var(--maze-coarse-width);
     height: var(--maze-coarse-height);
