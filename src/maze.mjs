@@ -1,11 +1,11 @@
-const ARROWS = [
-  [1, 0],
-  [0, 1],
-  [-1, 0],
-  [0, -1],
-];
-
 export function makeMaze(rows, open) {
+  const arrows = [
+    [1, 0],
+    [0, 1],
+    [-1, 0],
+    [0, -1],
+  ];
+
   while (open.length > 0) {
     let i = open.length - 1;
     if (Math.random() < 0.2) {
@@ -23,10 +23,10 @@ export function makeMaze(rows, open) {
         rows[y1][x1] = '';
         rows[y2][x2] = '';
 
-        ARROWS.sort(function() {
+        arrows.sort(function() {
           return Math.random() - Math.random();
         });
-        ARROWS.forEach((nextArrow) => {
+        arrows.forEach((nextArrow) => {
           open.push([[x2, y2], nextArrow]);
         });
       }
