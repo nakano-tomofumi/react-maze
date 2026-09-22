@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import { getCellFromPointer, drawMaze } from './canvas.mjs';
 import { createInitialMazeState, isMazeCompleted } from './maze.mjs';
 
 const CELL_SIZE = 7.5;
@@ -26,46 +27,54 @@ function getMazeSize() {
 }
 
 
-function Square(props) {
-  if (props.value === "X") {
-    return (
-      <td className="square wall">
-          {props.value}
-      </td>
-    )
-  } else if (props.value === ".") {
-    return (
-      <td className="square trace">
-          {props.value}
-      </td>
-    )
-  }
-  return (
-    <td className="square"
-        onMouseOver={props.onMouseOver}>
-        {props.value}
-    </td>
-  );
-}
-
-
-function Row(props) {
-  const row = props.row
-  return (
-    <tr>
-        {row.map((square, x) =>
-                 <Square key={x}
-                         value={square}
-                         onMouseOver={() => props.onMouseOver(x)}/>)}
-    </tr>
-  );
-}
-
-
 class Maze extends React.Component {
   constructor(props) {
     super(props);
     this.state = createInitialMazeState(this.props.w, this.props.h);
+    this.canvasRef = React.createRef();
+  }
+
+  componentDidMount() {
+    this.draw();
+  }
+
+  componentDidUpdate() {
+    this.draw();
+  }
+
+  draw() {
+    const canvas = this.canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const context = canvas.getContext('2d');
+    if (!context) {
+      return;
+    }
+
+    drawMaze(context, this.state.rows, this.state.completed);
+  }
+
+  handleMouseMove(event) {
+    const canvas = this.canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const cell = getCellFromPointer(
+      event.clientX,
+      event.clientY,
+      canvas.getBoundingClientRect(),
+      canvas.width,
+      canvas.height,
+    );
+
+    if (!cell || this.state.rows[cell.y][cell.x] !== '') {
+      return;
+    }
+
+    this.handleMouseOver(cell.x, cell.y);
   }
 
   handleMouseOver(x, y) {
@@ -97,21 +106,22 @@ class Maze extends React.Component {
 
   render() {
     const rows = this.state.rows;
-    const [width, height] = [this.props.w, this.props.h].map(
-      s => String((parseInt(s)*2+1)*CELL_SIZE)+"px");
+    const canvasWidth = rows[0].length;
+    const canvasHeight = rows.length;
+    const style = {
+      width: String(canvasWidth * CELL_SIZE) + 'px',
+      height: String(canvasHeight * CELL_SIZE) + 'px',
+    };
+
     return (
-      <table
-          className={this.state.completed ? "maze completed" : "maze"}
-          width={width}
-          height={height}>
-          <tbody>
-              {rows.map((row, y) =>
-                        <Row key={y}
-                             row={row}
-                             onMouseOver={(x) => this.handleMouseOver(x, y)}
-                        />)}
-          </tbody>
-      </table>
+      <canvas
+        ref={this.canvasRef}
+        className="maze"
+        width={canvasWidth}
+        height={canvasHeight}
+        style={style}
+        onMouseMove={(event) => this.handleMouseMove(event)}
+      />
     );
   }
 }
@@ -123,4 +133,5 @@ root.render(
   <Maze
       w={mazeSize.w}
       h={mazeSize.h}
-  />);
+  />,
+);
