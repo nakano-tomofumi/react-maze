@@ -32,7 +32,20 @@ Vite の本番ビルドを実行する。
 yarn test
 ```
 
-Node.js 標準テストランナーで迷路ロジックの回帰テストを実行する。
+Node.js 標準テストランナーで迷路ロジック、Canvas helper、URL サイズ解析の回帰テストを実行する。
+
+## CI と同等のローカル検証
+
+Pull Request の GitHub Actions では Node.js 22 を使用し、次の順序で依存関係の固定インストール、テスト、ビルドを実行する。
+
+```sh
+corepack enable
+yarn install --frozen-lockfile
+yarn test
+yarn build
+```
+
+ローカルでも PR 作成前に同じコマンドを実行する。依存関係が既に lockfile と一致してインストール済みの場合でも、少なくとも `yarn test` と `yarn build` は実行する。
 
 ## Maze generation benchmark
 
@@ -62,6 +75,8 @@ yarn build
 ```
 
 audit の結果に既知の問題が含まれる場合は、変更との関係と対応方針を PR に記載する。
+
+通常の CI では audit を必須ゲートにしない。registry 側の一時障害や既存脆弱性により、アプリ本体の回帰と無関係に PR を停止させないためである。
 
 ## Firebase Hosting
 
