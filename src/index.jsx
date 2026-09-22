@@ -92,12 +92,14 @@ class Maze extends React.Component {
     this.handlePointerPosition(event);
   }
 
-  handlePointerEnd(event) {
+  handlePointerEnd(event, processPosition = true) {
     if (!shouldReleasePointer(event.pointerId, this.activePointerId)) {
       return;
     }
 
-    this.handlePointerPosition(event);
+    if (processPosition) {
+      this.handlePointerPosition(event);
+    }
     this.activePointerId = null;
 
     const canvas = this.canvasRef.current;
@@ -158,7 +160,7 @@ class Maze extends React.Component {
         onPointerDown={(event) => this.handlePointerDown(event)}
         onPointerMove={(event) => this.handlePointerMove(event)}
         onPointerUp={(event) => this.handlePointerEnd(event)}
-        onPointerCancel={(event) => this.handlePointerEnd(event)}
+        onPointerCancel={(event) => this.handlePointerEnd(event, false)}
         onLostPointerCapture={(event) => this.handleLostPointerCapture(event)}
       />
     );
