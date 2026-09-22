@@ -25,7 +25,16 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: yarn install
+
+      - name: Upload generated lockfile
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-yarn-lock
+          path: yarn.lock
+
+      - name: Run lint
+        run: yarn lint
 
       - name: Run tests
         run: yarn test
