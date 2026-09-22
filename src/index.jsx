@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import './index.css';
 import { getCellFromPointer, drawMaze, drawTrace, drawTraceCells } from './canvas.mjs';
 import { createInitialMazeState, extendTrace, isPassage, isTraceVisited } from './maze.mjs';
+import { createSeededRandom, getMazeSeed } from './maze-seed.mjs';
 import { getMazeSize } from './maze-size.mjs';
 import {
   canActivatePointer,
@@ -18,7 +19,7 @@ class Maze extends React.Component {
   constructor(props) {
     super(props);
 
-    const initialMaze = createInitialMazeState(this.props.w, this.props.h);
+    const initialMaze = createInitialMazeState(this.props.w, this.props.h, this.props.random);
     this.rows = initialMaze.rows;
     this.trace = initialMaze.trace;
     this.state = {
@@ -168,11 +169,15 @@ class Maze extends React.Component {
 }
 
 const root = createRoot(document.getElementById("root"));
-const mazeSize = getMazeSize(window.location.search);
+const search = window.location.search;
+const mazeSize = getMazeSize(search);
+const seed = getMazeSeed(search);
+const random = seed === null ? undefined : createSeededRandom(seed);
 
 root.render(
   <Maze
       w={mazeSize.w}
       h={mazeSize.h}
+      random={random}
   />,
 );

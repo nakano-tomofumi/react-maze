@@ -10,7 +10,14 @@ function takeFrontier(open, index) {
   return entry;
 }
 
-export function makeMaze(rows, open) {
+function shuffleInPlace(values, random) {
+  for (let index = values.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [values[index], values[swapIndex]] = [values[swapIndex], values[index]];
+  }
+}
+
+export function makeMaze(rows, open, random = Math.random) {
   const arrows = [
     [1, 0],
     [0, 1],
@@ -20,8 +27,8 @@ export function makeMaze(rows, open) {
 
   while (open.length > 0) {
     let i = open.length - 1;
-    if (Math.random() < 0.2) {
-      i = Math.floor(Math.random() * open.length);
+    if (random() < 0.2) {
+      i = Math.floor(random() * open.length);
     }
 
     const [xy, arrow] = takeFrontier(open, i);
@@ -35,9 +42,7 @@ export function makeMaze(rows, open) {
         rows[y1][x1] = '';
         rows[y2][x2] = '';
 
-        arrows.sort(function() {
-          return Math.random() - Math.random();
-        });
+        shuffleInPlace(arrows, random);
         arrows.forEach((nextArrow) => {
           open.push([[x2, y2], nextArrow]);
         });
@@ -91,7 +96,7 @@ export function isMazeCompleted(rows, trace) {
   return isTraceVisited(trace, rows[0].length - 2, rows.length - 2);
 }
 
-export function createInitialMazeState(w, h) {
+export function createInitialMazeState(w, h, random = Math.random) {
   const [width, height] = [w, h].map((size) => Number.parseInt(size, 10));
   const rows = Array(height * 2 + 1)
     .fill('X')
@@ -102,7 +107,7 @@ export function createInitialMazeState(w, h) {
   makeMaze(rows, [
     [xy, [1, 0]],
     [xy, [0, 1]],
-  ]);
+  ], random);
 
   const trace = createTrace(rows);
 
