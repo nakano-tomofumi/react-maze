@@ -46,8 +46,49 @@ export function makeMaze(rows, open) {
   }
 }
 
-export function isMazeCompleted(rows) {
-  return rows[rows.length - 2][rows[0].length - 2] === '.';
+function traceIndex(trace, x, y) {
+  return y * trace.width + x;
+}
+
+export function isTraceVisited(trace, x, y) {
+  if (x < 0 || y < 0 || x >= trace.width || y >= trace.height) {
+    return false;
+  }
+
+  return trace.visited[traceIndex(trace, x, y)] === 1;
+}
+
+export function isPassage(rows, x, y) {
+  return Boolean(rows[y]) && rows[y][x] === '';
+}
+
+export function createTrace(rows) {
+  const height = rows.length;
+  const width = rows[0].length;
+  const trace = {
+    width,
+    height,
+    visited: new Uint8Array(width * height),
+    cells: [],
+  };
+
+  markTraceCell(trace, 1, 1);
+  return trace;
+}
+
+function markTraceCell(trace, x, y) {
+  const index = traceIndex(trace, x, y);
+  if (trace.visited[index] === 1) {
+    return false;
+  }
+
+  trace.visited[index] = 1;
+  trace.cells.push([x, y]);
+  return true;
+}
+
+export function isMazeCompleted(rows, trace) {
+  return isTraceVisited(trace, rows[0].length - 2, rows.length - 2);
 }
 
 export function createInitialMazeState(w, h) {
@@ -63,30 +104,21 @@ export function createInitialMazeState(w, h) {
     [xy, [0, 1]],
   ]);
 
-  rows[1][1] = '.';
+  const trace = createTrace(rows);
 
   return {
     rows,
-    completed: isMazeCompleted(rows),
+    trace,
+    completed: isMazeCompleted(rows, trace),
   };
 }
 
-
-export function updateTraceState(previousState, x, y) {
-  const rows = extendTrace(previousState.rows, x, y);
-  if (rows === previousState.rows) {
-    return null;
-  }
-
-  return {
-    rows,
-    completed: isMazeCompleted(rows),
-  };
-}
-
-export function extendTrace(rows, x, y) {
-  if (!rows[y] || rows[y][x] !== '') {
-    return rows;
+export function extendTrace(rows, trace, x, y) {
+  if (!isPassage(rows, x, y) || isTraceVisited(trace, x, y)) {
+    return {
+      addedCells: [],
+      completed: isMazeCompleted(rows, trace),
+    };
   }
 
   const directions = [
@@ -100,33 +132,37 @@ export function extendTrace(rows, x, y) {
     let scanX = x;
     let scanY = y;
 
-    while (rows[scanY][scanX] === '') {
+    while (
+      isPassage(rows, scanX, scanY) &&
+      !isTraceVisited(trace, scanX, scanY)
+    ) {
       scanX += dx;
       scanY += dy;
     }
 
-    if (rows[scanY][scanX] !== '.') {
+    if (!isTraceVisited(trace, scanX, scanY)) {
       continue;
     }
 
-    const nextRows = rows.slice();
-    const copiedRows = new Set();
+    const addedCells = [];
     let traceX = x;
     let traceY = y;
 
-    while (rows[traceY][traceX] === '') {
-      if (!copiedRows.has(traceY)) {
-        nextRows[traceY] = rows[traceY].slice();
-        copiedRows.add(traceY);
-      }
-
-      nextRows[traceY][traceX] = '.';
+    while (!isTraceVisited(trace, traceX, traceY)) {
+      markTraceCell(trace, traceX, traceY);
+      addedCells.push([traceX, traceY]);
       traceX += dx;
       traceY += dy;
     }
 
-    return nextRows;
+    return {
+      addedCells,
+      completed: isMazeCompleted(rows, trace),
+    };
   }
 
-  return rows;
+  return {
+    addedCells: [],
+    completed: isMazeCompleted(rows, trace),
+  };
 }

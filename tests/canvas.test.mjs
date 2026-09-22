@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { drawMaze, getCellFromPointer } from '../src/canvas.mjs';
+import { drawMaze, drawTrace, drawTraceCells, getCellFromPointer } from '../src/canvas.mjs';
 
 const rect = {
   left: 10,
@@ -37,7 +37,7 @@ test('zero-sized canvas rectangle returns null', () => {
   );
 });
 
-test('drawMaze paints walls and active trace with expected colors', () => {
+test('drawMaze paints static walls and trace separately', () => {
   const calls = [];
   const context = {
     fillStyle: '',
@@ -45,12 +45,15 @@ test('drawMaze paints walls and active trace with expected colors', () => {
       calls.push({ fillStyle: this.fillStyle, x, y, width, height });
     },
   };
+  const trace = {
+    cells: [[1, 1]],
+  };
 
   drawMaze(context, [
     ['X', 'X', 'X'],
-    ['X', '.', ''],
+    ['X', '', 'X'],
     ['X', 'X', 'X'],
-  ], false);
+  ], trace, false);
 
   assert.deepEqual(calls[0], {
     fillStyle: '#fff',
@@ -63,7 +66,24 @@ test('drawMaze paints walls and active trace with expected colors', () => {
   assert.ok(calls.some((call) => call.fillStyle === 'red' && call.x === 1 && call.y === 1));
 });
 
-test('drawMaze paints completed trace green', () => {
+test('drawTraceCells only paints the supplied delta cells', () => {
+  const calls = [];
+  const context = {
+    fillStyle: '',
+    fillRect(x, y, width, height) {
+      calls.push({ fillStyle: this.fillStyle, x, y, width, height });
+    },
+  };
+
+  drawTraceCells(context, [[2, 1], [3, 1]], false);
+
+  assert.deepEqual(calls, [
+    { fillStyle: 'red', x: 2, y: 1, width: 1, height: 1 },
+    { fillStyle: 'red', x: 3, y: 1, width: 1, height: 1 },
+  ]);
+});
+
+test('drawTrace repaints the complete trace green after completion', () => {
   const colors = [];
   const context = {
     fillStyle: '',
@@ -72,7 +92,7 @@ test('drawMaze paints completed trace green', () => {
     },
   };
 
-  drawMaze(context, [['.']], true);
+  drawTrace(context, { cells: [[1, 1], [2, 1], [3, 1]] }, true);
 
-  assert.ok(colors.includes('green'));
+  assert.deepEqual(colors, ['green', 'green', 'green']);
 });
