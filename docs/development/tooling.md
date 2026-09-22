@@ -26,6 +26,16 @@ Vite の本番ビルドを実行する。
 
 `vite.config.mjs` の `build.outDir` は `build` であり、Firebase Hosting の公開ディレクトリも `firebase.json` で `build` に設定されている。
 
+## Lint
+
+```sh
+yarn lint
+```
+
+ESLint でリポジトリ内の JavaScript / JSX を検証する。JavaScript の基本的な問題に加え、React 固有の推奨ルールと `react/no-direct-mutation-state` を有効にしている。
+
+現時点では JSDoc / TypeScript / `checkJs` による型ベース静的検証は導入しない。現行コードは小規模な JavaScript / JSX 構成であり、型注釈や移行コストに対して得られる効果が限定的なため、まず lint と既存テストを CI の必須ゲートとする。型情報が必要な変更規模になった場合は別 Issue で再評価する。
+
 ## Test
 
 ```sh
@@ -36,16 +46,17 @@ Node.js 標準テストランナーで迷路ロジック、Canvas helper、URL �
 
 ## CI と同等のローカル検証
 
-Pull Request の GitHub Actions では Node.js 22 を使用し、次の順序で依存関係の固定インストール、テスト、ビルドを実行する。
+Pull Request の GitHub Actions では Node.js 22 を使用し、次の順序で依存関係の固定インストール、lint、テスト、ビルドを実行する。
 
 ```sh
 corepack enable
 yarn install --frozen-lockfile
+yarn lint
 yarn test
 yarn build
 ```
 
-ローカルでも PR 作成前に同じコマンドを実行する。依存関係が既に lockfile と一致してインストール済みの場合でも、少なくとも `yarn test` と `yarn build` は実行する。
+ローカルでも PR 作成前に同じコマンドを実行する。依存関係が既に lockfile と一致してインストール済みの場合でも、少なくとも `yarn lint`、`yarn test`、`yarn build` は実行する。
 
 ## Maze generation benchmark
 
