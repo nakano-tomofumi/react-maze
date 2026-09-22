@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createInitialMazeState, extendTrace, isMazeCompleted } from '../src/maze.mjs';
+import { createInitialMazeState, extendTrace, isMazeCompleted, updateTraceState } from '../src/maze.mjs';
 
 function canReachGoal(rows) {
   const goalX = rows[0].length - 2;
@@ -159,4 +159,53 @@ test('extendTrace can reach the goal without mutating the previous state', () =>
   assert.deepEqual(rows, previousRows);
   assert.equal(isMazeCompleted(rows), false);
   assert.equal(isMazeCompleted(completedRows), true);
+});
+
+
+test('updateTraceState composes consecutive moves from the latest state', () => {
+  const initialState = {
+    rows: [
+      ['X', 'X', 'X', 'X', 'X'],
+      ['X', '.', '', '', 'X'],
+      ['X', 'X', 'X', '', 'X'],
+      ['X', 'X', 'X', '', 'X'],
+      ['X', 'X', 'X', 'X', 'X'],
+    ],
+    completed: false,
+  };
+
+  const firstUpdate = updateTraceState(initialState, 3, 1);
+  assert.notEqual(firstUpdate, null);
+
+  const stateAfterFirstMove = {
+    ...initialState,
+    ...firstUpdate,
+  };
+  const secondUpdate = updateTraceState(stateAfterFirstMove, 3, 3);
+  assert.notEqual(secondUpdate, null);
+
+  const finalState = {
+    ...stateAfterFirstMove,
+    ...secondUpdate,
+  };
+
+  assert.equal(initialState.rows[1][2], '');
+  assert.equal(initialState.rows[1][3], '');
+  assert.equal(stateAfterFirstMove.rows[1][2], '.');
+  assert.equal(stateAfterFirstMove.rows[1][3], '.');
+  assert.equal(finalState.rows[3][3], '.');
+  assert.equal(finalState.completed, true);
+});
+
+test('updateTraceState returns null for a no-op update', () => {
+  const state = {
+    rows: [
+      ['X', 'X', 'X'],
+      ['X', '.', 'X'],
+      ['X', 'X', 'X'],
+    ],
+    completed: true,
+  };
+
+  assert.equal(updateTraceState(state, 1, 1), null);
 });
