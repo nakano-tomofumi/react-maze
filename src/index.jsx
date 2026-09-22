@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
+import { createInitialMazeState, isMazeCompleted } from './maze.mjs';
 
 const CELL_SIZE = 7.5;
 const DEFAULT_WIDTH = 84;
@@ -61,51 +62,10 @@ function Row(props) {
 }
 
 
-function makeMaze(rows, open) {
-  var arrows = [
-    [1, 0],
-    [0, 1],
-    [-1, 0],
-    [0, -1]];
-  while(open.length > 0) {
-    var i = open.length-1;
-    if (Math.random() < 0.2) {
-      i = Math.floor(Math.random() * Math.floor(open.length));
-    }
-    const [xy, arrow] = open[i];
-    const [x, y] = xy;
-    const [xa, ya] = arrow;
-    const [x2, y2] = [x+xa*2, y+ya*2];
-    if (0 < x2 && x2 < rows[0].length && 0 < y2 && y2 < rows.length) {
-      if (rows[y2][x2] !== '') {
-        const [x1, y1] = [x+xa, y+ya];
-        rows[y1][x1] = '';
-        rows[y2][x2] = '';
-        arrows.sort(function() { return Math.random() - Math.random(); });
-        arrows.forEach((arrow) => {
-          open.push([[x2, y2], arrow]);
-        });
-      }
-    }
-    open.splice(i, 1);
-  }
-}
-
-
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    const [w, h] = [this.props.w, this.props.h].map(s => parseInt(s));
-    const rows = Array(h*2+1).fill('X').map(x => Array(w*2+1).fill('X'));
-    rows[1][1] = '';
-    const xy = [1, 1];
-    makeMaze(rows, [[xy, [1, 0]],
-                    [xy, [0, 1]]]);
-    rows[1][1] = '.';
-    this.state = {
-      rows: rows,
-      completed: false,
-    }
+    this.state = createInitialMazeState(this.props.w, this.props.h);
   }
 
   handleMouseOver(x, y) {
@@ -126,7 +86,7 @@ class Maze extends React.Component {
           rows[y1][x1] = '.';
           [x1, y1] = [x1+a[1], y1+a[0]];
         }
-        const completed = rows[rows.length - 2][rows[0].length - 2] === '.';
+        const completed = isMazeCompleted(rows);
         this.setState({
           rows: rows,
           completed: completed,
