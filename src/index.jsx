@@ -1,8 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import { getCellFromPointer, drawMaze } from './canvas.mjs';
-import { createInitialMazeState, updateTraceState } from './maze.mjs';
+import { getCellFromPointer, drawMaze, drawTrace, drawTraceCells } from './canvas.mjs';
+import { createInitialMazeState, extendTrace, isPassage, isTraceVisited } from './maze.mjs';
 import { getMazeSize } from './maze-size.mjs';
 
 const CELL_SIZE = 7.5;
@@ -11,30 +11,30 @@ const CELL_SIZE = 7.5;
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    this.state = createInitialMazeState(this.props.w, this.props.h);
+
+    const initialMaze = createInitialMazeState(this.props.w, this.props.h);
+    this.rows = initialMaze.rows;
+    this.trace = initialMaze.trace;
+    this.state = {
+      completed: initialMaze.completed,
+    };
     this.canvasRef = React.createRef();
   }
 
   componentDidMount() {
-    this.draw();
+    const context = this.getContext();
+    if (context) {
+      drawMaze(context, this.rows, this.trace, this.state.completed);
+    }
   }
 
-  componentDidUpdate() {
-    this.draw();
-  }
-
-  draw() {
+  getContext() {
     const canvas = this.canvasRef.current;
     if (!canvas) {
-      return;
+      return null;
     }
 
-    const context = canvas.getContext('2d');
-    if (!context) {
-      return;
-    }
-
-    drawMaze(context, this.state.rows, this.state.completed);
+    return canvas.getContext('2d');
   }
 
   handleMouseMove(event) {
@@ -51,7 +51,11 @@ class Maze extends React.Component {
       canvas.height,
     );
 
-    if (!cell || this.state.rows[cell.y][cell.x] !== '') {
+    if (
+      !cell ||
+      !isPassage(this.rows, cell.x, cell.y) ||
+      isTraceVisited(this.trace, cell.x, cell.y)
+    ) {
       return;
     }
 
@@ -59,13 +63,30 @@ class Maze extends React.Component {
   }
 
   handleMouseOver(x, y) {
-    this.setState((previousState) => updateTraceState(previousState, x, y));
+    const previousCompleted = this.state.completed;
+    const update = extendTrace(this.rows, this.trace, x, y);
+
+    if (update.addedCells.length === 0) {
+      return;
+    }
+
+    const context = this.getContext();
+    if (context) {
+      if (update.completed && !previousCompleted) {
+        drawTrace(context, this.trace, true);
+      } else {
+        drawTraceCells(context, update.addedCells, previousCompleted);
+      }
+    }
+
+    if (update.completed !== previousCompleted) {
+      this.setState({ completed: update.completed });
+    }
   }
 
   render() {
-    const rows = this.state.rows;
-    const canvasWidth = rows[0].length;
-    const canvasHeight = rows.length;
+    const canvasWidth = this.rows[0].length;
+    const canvasHeight = this.rows.length;
     const style = {
       width: String(canvasWidth * CELL_SIZE) + 'px',
       height: String(canvasHeight * CELL_SIZE) + 'px',

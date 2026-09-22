@@ -57,6 +57,16 @@ yarn benchmark:maze
 
 性能値は実行環境によって変動するため、この benchmark の絶対時間を CI の合否判定には使用しない。性能変更の PR では、Node.js バージョンなどの実行環境と計測結果を記録し、同一環境で変更前後を比較する。
 
+## Trace update benchmark
+
+```sh
+yarn benchmark:trace
+```
+
+401 セル幅の直線通路について、開始済み trace へ一度に接続する更新処理を複数回計測し、中央値と各 run を表示する。
+
+この benchmark は trace 状態更新そのものを計測する。Canvas の描画コストはブラウザや GPU に依存するため、通常操作が `drawMaze()` ではなく追加セルだけを `drawTraceCells()` へ渡すことを回帰テストで保証する。絶対時間は CI の合否条件にしない。
+
 ## Local preview
 
 ```sh

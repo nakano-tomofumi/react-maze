@@ -19,6 +19,7 @@
     "build": "vite build",
     "test": "node --test",
     "benchmark:maze": "node scripts/benchmark-maze.mjs",
+    "benchmark:trace": "node scripts/benchmark-trace.mjs",
     "preview": "vite preview",
     "deploy": "firebase deploy"
   }

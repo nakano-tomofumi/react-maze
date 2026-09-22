@@ -1,7 +1,13 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createInitialMazeState, extendTrace, isMazeCompleted, updateTraceState } from '../src/maze.mjs';
+import {
+  createInitialMazeState,
+  extendTrace,
+  isMazeCompleted,
+  isPassage,
+  isTraceVisited,
+} from '../src/maze.mjs';
 
 function canReachGoal(rows) {
   const goalX = rows[0].length - 2;
@@ -55,11 +61,30 @@ function assertOuterWalls(rows) {
   }
 }
 
+function fixture() {
+  const rows = [
+    ['X', 'X', 'X', 'X', 'X'],
+    ['X', '', '', '', 'X'],
+    ['X', 'X', 'X', '', 'X'],
+    ['X', 'X', 'X', '', 'X'],
+    ['X', 'X', 'X', 'X', 'X'],
+  ];
+  const trace = {
+    width: 5,
+    height: 5,
+    visited: new Uint8Array(25),
+    cells: [[1, 1]],
+  };
+  trace.visited[6] = 1;
+  return { rows, trace };
+}
+
 test('1x1 maze starts completed because start and goal are the same cell', () => {
   const state = createInitialMazeState(1, 1);
 
   assert.equal(state.completed, true);
-  assert.equal(state.rows[1][1], '.');
+  assert.equal(state.rows[1][1], '');
+  assert.equal(isTraceVisited(state.trace, 1, 1), true);
 });
 
 test('1xN maze with N > 1 does not start completed', () => {
@@ -74,138 +99,82 @@ test('Nx1 maze with N > 1 does not start completed', () => {
   assert.equal(state.completed, false);
 });
 
-test('completion becomes true when the goal cell is traced', () => {
-  const state = createInitialMazeState(2, 2);
-  const rows = state.rows.map((row) => row.slice());
-
-  rows[rows.length - 2][rows[0].length - 2] = '.';
-
-  assert.equal(isMazeCompleted(rows), true);
-});
-
 test('maximum 200x200 maze keeps dimensions, outer walls, and a path to the goal', () => {
   const state = createInitialMazeState(200, 200);
 
   assert.equal(state.rows.length, 401);
   assert.equal(state.rows[0].length, 401);
-  assert.equal(state.rows[1][1], '.');
+  assert.equal(state.rows[1][1], '');
   assertOuterWalls(state.rows);
   assert.equal(canReachGoal(state.rows), true);
 });
 
+test('trace state is separate from static maze rows', () => {
+  const state = createInitialMazeState(2, 2);
+  const before = state.rows.map((row) => row.slice());
 
-test('extendTrace does not mutate the input and only copies changed rows', () => {
-  const rows = [
-    ['X', 'X', 'X', 'X', 'X'],
-    ['X', '.', 'X', '', 'X'],
-    ['X', '', 'X', '', 'X'],
-    ['X', '', '', '', 'X'],
-    ['X', 'X', 'X', 'X', 'X'],
-  ];
+  for (let y = 0; y < state.rows.length; y += 1) {
+    for (let x = 0; x < state.rows[0].length; x += 1) {
+      if (isPassage(state.rows, x, y) && !isTraceVisited(state.trace, x, y)) {
+        extendTrace(state.rows, state.trace, x, y);
+      }
+    }
+  }
+
+  assert.deepEqual(state.rows, before);
+});
+
+test('extendTrace returns only newly traced cells and keeps static rows unchanged', () => {
+  const { rows, trace } = fixture();
   const snapshot = rows.map((row) => row.slice());
 
-  const nextRows = extendTrace(rows, 1, 3);
+  const update = extendTrace(rows, trace, 3, 1);
 
   assert.deepEqual(rows, snapshot);
-  assert.notStrictEqual(nextRows, rows);
-  assert.strictEqual(nextRows[0], rows[0]);
-  assert.strictEqual(nextRows[1], rows[1]);
-  assert.notStrictEqual(nextRows[2], rows[2]);
-  assert.notStrictEqual(nextRows[3], rows[3]);
-  assert.strictEqual(nextRows[4], rows[4]);
-  assert.equal(nextRows[3][1], '.');
-  assert.equal(nextRows[2][1], '.');
-  assert.equal(nextRows[1][1], '.');
+  assert.deepEqual(update.addedCells, [[3, 1], [2, 1]]);
+  assert.equal(isTraceVisited(trace, 2, 1), true);
+  assert.equal(isTraceVisited(trace, 3, 1), true);
+  assert.equal(update.completed, false);
 });
 
-test('extendTrace returns the original rows when no path reaches the traced route', () => {
+test('extendTrace composes consecutive moves and completes at the goal', () => {
+  const { rows, trace } = fixture();
+
+  const first = extendTrace(rows, trace, 3, 1);
+  const second = extendTrace(rows, trace, 3, 3);
+
+  assert.deepEqual(first.addedCells, [[3, 1], [2, 1]]);
+  assert.deepEqual(second.addedCells, [[3, 3], [3, 2]]);
+  assert.equal(second.completed, true);
+  assert.equal(isMazeCompleted(rows, trace), true);
+});
+
+test('extendTrace is a no-op for walls and already traced cells', () => {
+  const { rows, trace } = fixture();
+
+  assert.deepEqual(extendTrace(rows, trace, 0, 0).addedCells, []);
+  assert.deepEqual(extendTrace(rows, trace, 1, 1).addedCells, []);
+  assert.equal(trace.cells.length, 1);
+});
+
+test('extendTrace is a no-op when no straight path reaches the trace', () => {
   const rows = [
     ['X', 'X', 'X', 'X', 'X'],
-    ['X', '.', 'X', '', 'X'],
+    ['X', '', 'X', '', 'X'],
     ['X', 'X', 'X', '', 'X'],
     ['X', '', '', '', 'X'],
     ['X', 'X', 'X', 'X', 'X'],
   ];
-
-  const nextRows = extendTrace(rows, 3, 3);
-
-  assert.strictEqual(nextRows, rows);
-});
-
-test('extendTrace returns the original rows for walls and already traced cells', () => {
-  const rows = [
-    ['X', 'X', 'X'],
-    ['X', '.', 'X'],
-    ['X', 'X', 'X'],
-  ];
-
-  assert.strictEqual(extendTrace(rows, 0, 0), rows);
-  assert.strictEqual(extendTrace(rows, 1, 1), rows);
-});
-
-test('extendTrace can reach the goal without mutating the previous state', () => {
-  const rows = [
-    ['X', 'X', 'X', 'X', 'X'],
-    ['X', '.', '', '', 'X'],
-    ['X', 'X', 'X', '', 'X'],
-    ['X', 'X', 'X', '', 'X'],
-    ['X', 'X', 'X', 'X', 'X'],
-  ];
-  const previousRows = rows.map((row) => row.slice());
-
-  const firstMove = extendTrace(rows, 3, 1);
-  const completedRows = extendTrace(firstMove, 3, 3);
-
-  assert.deepEqual(rows, previousRows);
-  assert.equal(isMazeCompleted(rows), false);
-  assert.equal(isMazeCompleted(completedRows), true);
-});
-
-
-test('updateTraceState composes consecutive moves from the latest state', () => {
-  const initialState = {
-    rows: [
-      ['X', 'X', 'X', 'X', 'X'],
-      ['X', '.', '', '', 'X'],
-      ['X', 'X', 'X', '', 'X'],
-      ['X', 'X', 'X', '', 'X'],
-      ['X', 'X', 'X', 'X', 'X'],
-    ],
-    completed: false,
+  const trace = {
+    width: 5,
+    height: 5,
+    visited: new Uint8Array(25),
+    cells: [[1, 1]],
   };
+  trace.visited[6] = 1;
 
-  const firstUpdate = updateTraceState(initialState, 3, 1);
-  assert.notEqual(firstUpdate, null);
+  const update = extendTrace(rows, trace, 3, 3);
 
-  const stateAfterFirstMove = {
-    ...initialState,
-    ...firstUpdate,
-  };
-  const secondUpdate = updateTraceState(stateAfterFirstMove, 3, 3);
-  assert.notEqual(secondUpdate, null);
-
-  const finalState = {
-    ...stateAfterFirstMove,
-    ...secondUpdate,
-  };
-
-  assert.equal(initialState.rows[1][2], '');
-  assert.equal(initialState.rows[1][3], '');
-  assert.equal(stateAfterFirstMove.rows[1][2], '.');
-  assert.equal(stateAfterFirstMove.rows[1][3], '.');
-  assert.equal(finalState.rows[3][3], '.');
-  assert.equal(finalState.completed, true);
-});
-
-test('updateTraceState returns null for a no-op update', () => {
-  const state = {
-    rows: [
-      ['X', 'X', 'X'],
-      ['X', '.', 'X'],
-      ['X', 'X', 'X'],
-    ],
-    completed: true,
-  };
-
-  assert.equal(updateTraceState(state, 1, 1), null);
+  assert.deepEqual(update.addedCells, []);
+  assert.equal(trace.cells.length, 1);
 });
