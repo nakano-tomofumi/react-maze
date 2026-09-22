@@ -12,9 +12,6 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: {
-        ...globals.nodeBuiltin,
-      },
       parserOptions: {
         ecmaFeatures: {
           jsx: true,
@@ -27,6 +24,14 @@ export default [
     languageOptions: {
       globals: {
         ...globals.browser,
+      },
+    },
+  },
+  {
+    files: ['scripts/**/*.{js,mjs}', 'tests/**/*.{js,mjs}', '*.config.{js,mjs,cjs}'],
+    languageOptions: {
+      globals: {
+        ...globals.nodeBuiltin,
       },
     },
   },
