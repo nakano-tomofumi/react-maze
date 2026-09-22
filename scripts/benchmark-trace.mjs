@@ -1,10 +1,11 @@
 import { performance } from 'node:perf_hooks';
 
+import { drawMaze, drawTraceCells } from '../src/canvas.mjs';
 import { extendTrace } from '../src/maze.mjs';
 
-const RUNS = 20;
+const RUNS = 50;
 const WIDTH = 401;
-const HEIGHT = 3;
+const HEIGHT = 401;
 const TARGET_X = WIDTH - 2;
 
 function createFixture() {
@@ -24,24 +25,46 @@ function createFixture() {
   return { rows, trace };
 }
 
+function createContext() {
+  return {
+    fillStyle: '',
+    fillRect() {},
+  };
+}
+
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
   return sorted[Math.floor(sorted.length / 2)];
 }
 
-const durations = [];
+const fullDrawDurations = [];
+const deltaDrawDurations = [];
+
 for (let run = 0; run < RUNS; run += 1) {
   const { rows, trace } = createFixture();
-  const start = performance.now();
   const update = extendTrace(rows, trace, TARGET_X, 1);
-  durations.push(performance.now() - start);
 
   if (update.addedCells.length !== TARGET_X - 1) {
     throw new Error(`unexpected trace length: ${update.addedCells.length}`);
   }
+
+  const fullContext = createContext();
+  let start = performance.now();
+  drawMaze(fullContext, rows, trace, false);
+  fullDrawDurations.push(performance.now() - start);
+
+  const deltaContext = createContext();
+  start = performance.now();
+  drawTraceCells(deltaContext, update.addedCells, false);
+  deltaDrawDurations.push(performance.now() - start);
 }
 
-console.log(`trace corridor: ${WIDTH}x${HEIGHT}`);
+const fullMedian = median(fullDrawDurations);
+const deltaMedian = median(deltaDrawDurations);
+
+console.log(`maze: ${WIDTH}x${HEIGHT}`);
+console.log(`delta trace cells: ${TARGET_X - 1}`);
 console.log(`runs: ${RUNS}`);
-console.log(`median: ${median(durations).toFixed(3)} ms`);
-console.log(`samples: ${durations.map((value) => value.toFixed(3)).join(', ')} ms`);
+console.log(`full redraw median: ${fullMedian.toFixed(3)} ms`);
+console.log(`delta redraw median: ${deltaMedian.toFixed(3)} ms`);
+console.log(`relative speedup: ${(fullMedian / deltaMedian).toFixed(1)}x`);
