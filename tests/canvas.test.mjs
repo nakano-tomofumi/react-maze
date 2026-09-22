@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { getCellFromPointer } from '../src/canvas.mjs';
+import { drawMaze, getCellFromPointer } from '../src/canvas.mjs';
 
 const rect = {
   left: 10,
@@ -35,4 +35,44 @@ test('zero-sized canvas rectangle returns null', () => {
     getCellFromPointer(10, 20, { ...rect, width: 0, right: 10 }, 40, 20),
     null,
   );
+});
+
+test('drawMaze paints walls and active trace with expected colors', () => {
+  const calls = [];
+  const context = {
+    fillStyle: '',
+    fillRect(x, y, width, height) {
+      calls.push({ fillStyle: this.fillStyle, x, y, width, height });
+    },
+  };
+
+  drawMaze(context, [
+    ['X', 'X', 'X'],
+    ['X', '.', ''],
+    ['X', 'X', 'X'],
+  ], false);
+
+  assert.deepEqual(calls[0], {
+    fillStyle: '#fff',
+    x: 0,
+    y: 0,
+    width: 3,
+    height: 3,
+  });
+  assert.ok(calls.some((call) => call.fillStyle === '#999' && call.x === 0 && call.y === 0));
+  assert.ok(calls.some((call) => call.fillStyle === 'red' && call.x === 1 && call.y === 1));
+});
+
+test('drawMaze paints completed trace green', () => {
+  const colors = [];
+  const context = {
+    fillStyle: '',
+    fillRect() {
+      colors.push(this.fillStyle);
+    },
+  };
+
+  drawMaze(context, [['.']], true);
+
+  assert.ok(colors.includes('green'));
 });
