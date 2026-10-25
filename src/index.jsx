@@ -1,126 +1,183 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
-import { createInitialMazeState, isMazeCompleted } from './maze.mjs';
+import { getCellFromPointer, drawMaze, drawTrace, drawTraceCells } from './canvas.mjs';
+import { createInitialMazeState, extendTrace, isPassage, isTraceVisited } from './maze.mjs';
+import { createSeededRandom, getMazeSeed } from './maze-seed.mjs';
+import { getMazeSize } from './maze-size.mjs';
+import {
+  canActivatePointer,
+  shouldReleasePointer,
+  shouldTrackPointerMove,
+} from './pointer-input.mjs';
 
 const CELL_SIZE = 7.5;
-const DEFAULT_WIDTH = 84;
-const DEFAULT_HEIGHT = 42;
-const MAX_SIZE = 200;
-
-
-function getMazeSize() {
-  const params = new URLSearchParams(window.location.search);
-  const parseSize = (name, fallback) => {
-    const value = Number.parseInt(params.get(name), 10);
-    if (!Number.isInteger(value)) {
-      return fallback;
-    }
-    return Math.min(Math.max(value, 1), MAX_SIZE);
-  };
-
-  return {
-    w: parseSize('w', DEFAULT_WIDTH),
-    h: parseSize('h', DEFAULT_HEIGHT),
-  };
-}
-
-
-function Square(props) {
-  if (props.value === "X") {
-    return (
-      <td className="square wall">
-          {props.value}
-      </td>
-    )
-  } else if (props.value === ".") {
-    return (
-      <td className="square trace">
-          {props.value}
-      </td>
-    )
-  }
-  return (
-    <td className="square"
-        onMouseOver={props.onMouseOver}>
-        {props.value}
-    </td>
-  );
-}
-
-
-function Row(props) {
-  const row = props.row
-  return (
-    <tr>
-        {row.map((square, x) =>
-                 <Square key={x}
-                         value={square}
-                         onMouseOver={() => props.onMouseOver(x)}/>)}
-    </tr>
-  );
-}
+const COARSE_POINTER_CELL_SIZE = 15;
 
 
 class Maze extends React.Component {
   constructor(props) {
     super(props);
-    this.state = createInitialMazeState(this.props.w, this.props.h);
+
+    const initialMaze = createInitialMazeState(this.props.w, this.props.h, this.props.random);
+    this.rows = initialMaze.rows;
+    this.trace = initialMaze.trace;
+    this.state = {
+      completed: initialMaze.completed,
+    };
+    this.canvasRef = React.createRef();
+    this.activePointerId = null;
   }
 
-  handleMouseOver(x, y) {
-    const rows = this.state.rows.slice();
-    const arrows = [
-      [1, 0],
-      [0, 1],
-      [-1, 0],
-      [0, -1]];
-    arrows.forEach(a => {
-      var [x1, y1] = [x, y];
-      while(rows[y1][x1] === '') {
-        [x1, y1] = [x1+a[1], y1+a[0]];
+  componentDidMount() {
+    const context = this.getContext();
+    if (context) {
+      drawMaze(context, this.rows, this.trace, this.state.completed);
+    }
+  }
+
+  getContext() {
+    const canvas = this.canvasRef.current;
+    if (!canvas) {
+      return null;
+    }
+
+    return canvas.getContext('2d');
+  }
+
+  handlePointerPosition(event) {
+    const canvas = this.canvasRef.current;
+    if (!canvas) {
+      return;
+    }
+
+    const cell = getCellFromPointer(
+      event.clientX,
+      event.clientY,
+      canvas.getBoundingClientRect(),
+      canvas.width,
+      canvas.height,
+    );
+
+    if (
+      !cell ||
+      !isPassage(this.rows, cell.x, cell.y) ||
+      isTraceVisited(this.trace, cell.x, cell.y)
+    ) {
+      return;
+    }
+
+    this.extendTraceTo(cell.x, cell.y);
+  }
+
+  handlePointerDown(event) {
+    if (!canActivatePointer(event.pointerType, event.isPrimary, this.activePointerId)) {
+      return;
+    }
+
+    this.activePointerId = event.pointerId;
+
+    const canvas = this.canvasRef.current;
+    if (canvas && typeof canvas.setPointerCapture === 'function') {
+      canvas.setPointerCapture(event.pointerId);
+    }
+
+    this.handlePointerPosition(event);
+  }
+
+  handlePointerMove(event) {
+    if (!shouldTrackPointerMove(event.pointerType, event.pointerId, this.activePointerId)) {
+      return;
+    }
+
+    this.handlePointerPosition(event);
+  }
+
+  handlePointerEnd(event, processPosition = true) {
+    if (!shouldReleasePointer(event.pointerId, this.activePointerId)) {
+      return;
+    }
+
+    if (processPosition) {
+      this.handlePointerPosition(event);
+    }
+    this.activePointerId = null;
+
+    const canvas = this.canvasRef.current;
+    if (
+      canvas &&
+      typeof canvas.hasPointerCapture === 'function' &&
+      canvas.hasPointerCapture(event.pointerId)
+    ) {
+      canvas.releasePointerCapture(event.pointerId);
+    }
+  }
+
+  handleLostPointerCapture(event) {
+    if (shouldReleasePointer(event.pointerId, this.activePointerId)) {
+      this.activePointerId = null;
+    }
+  }
+
+  extendTraceTo(x, y) {
+    const previousCompleted = this.state.completed;
+    const update = extendTrace(this.rows, this.trace, x, y);
+
+    if (update.addedCells.length === 0) {
+      return;
+    }
+
+    const context = this.getContext();
+    if (context) {
+      if (update.completed && !previousCompleted) {
+        drawTrace(context, this.trace, true);
+      } else {
+        drawTraceCells(context, update.addedCells, previousCompleted);
       }
-      if (rows[y1][x1] === '.') {
-        [x1, y1] = [x, y];
-        while(rows[y1][x1] === '') {
-          rows[y1][x1] = '.';
-          [x1, y1] = [x1+a[1], y1+a[0]];
-        }
-        const completed = isMazeCompleted(rows);
-        this.setState({
-          rows: rows,
-          completed: completed,
-        });
-      }
-    });
+    }
+
+    if (update.completed !== previousCompleted) {
+      this.setState({ completed: update.completed });
+    }
   }
 
   render() {
-    const rows = this.state.rows;
-    const [width, height] = [this.props.w, this.props.h].map(
-      s => String((parseInt(s)*2+1)*CELL_SIZE)+"px");
+    const canvasWidth = this.rows[0].length;
+    const canvasHeight = this.rows.length;
+    const style = {
+      '--maze-width': String(canvasWidth * CELL_SIZE) + 'px',
+      '--maze-height': String(canvasHeight * CELL_SIZE) + 'px',
+      '--maze-coarse-width': String(canvasWidth * COARSE_POINTER_CELL_SIZE) + 'px',
+      '--maze-coarse-height': String(canvasHeight * COARSE_POINTER_CELL_SIZE) + 'px',
+    };
+
     return (
-      <table
-          className={this.state.completed ? "maze completed" : "maze"}
-          width={width}
-          height={height}>
-          <tbody>
-              {rows.map((row, y) =>
-                        <Row key={y}
-                             row={row}
-                             onMouseOver={(x) => this.handleMouseOver(x, y)}
-                        />)}
-          </tbody>
-      </table>
+      <canvas
+        ref={this.canvasRef}
+        className="maze"
+        width={canvasWidth}
+        height={canvasHeight}
+        style={style}
+        onPointerDown={(event) => this.handlePointerDown(event)}
+        onPointerMove={(event) => this.handlePointerMove(event)}
+        onPointerUp={(event) => this.handlePointerEnd(event)}
+        onPointerCancel={(event) => this.handlePointerEnd(event, false)}
+        onLostPointerCapture={(event) => this.handleLostPointerCapture(event)}
+      />
     );
   }
 }
 
 const root = createRoot(document.getElementById("root"));
-const mazeSize = getMazeSize();
+const search = window.location.search;
+const mazeSize = getMazeSize(search);
+const seed = getMazeSeed(search);
+const random = seed === null ? undefined : createSeededRandom(seed);
 
 root.render(
   <Maze
       w={mazeSize.w}
       h={mazeSize.h}
-  />);
+      random={random}
+  />,
+);

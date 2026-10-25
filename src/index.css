@@ -8,9 +8,20 @@ ol, ul {
 }
 
 .maze {
-    border: solid 0px;
-    border-collapse: collapse;
-    margin: 0 auto;
+  display: block;
+  image-rendering: pixelated;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+  width: var(--maze-width);
+  height: var(--maze-height);
+}
+
+@media (any-pointer: coarse) {
+  .maze {
+    width: var(--maze-coarse-width);
+    height: var(--maze-coarse-height);
+  }
 }
 
 .board-row:after {
