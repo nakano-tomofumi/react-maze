@@ -15,7 +15,7 @@
     "vite": "^6.4.4"
   },
   "resolutions": {
-    "@babel/types": "^7.29.0",
+    "@babel/types": "^7.29.11",
     "debug": "^4.4.3"
   },
   "scripts": {
